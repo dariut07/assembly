@@ -1,0 +1,106 @@
+.model small
+.stack 200h
+
+    .data
+    buffer db 128 ("$")    ; definim valoarea buffer ului
+   mesaj db "introduceti sirul$"
+mesaj1 db "nr cuv:$"
+mesaj2 db "nr carac:$"
+    .code
+    main proc
+	  mov ax,@data
+	  mov ds,ax
+	  mov dx,offset mesaj
+	  mov ah,09
+	  int 21h
+	  mov dx, 0
+		mov dx, 10 
+		mov ah, 02h
+		int 21h
+	  
+	  mov ax, @data   
+        mov ds, ax  
+		
+        mov ah, 0Ah       ; functie de citire sir de caractere
+        mov dx, offset buffer ;adresa buffer ului pt input
+        int 21h           ;intrerupere 
+		
+		;enter -trece pe linia urm pt afisare contoare
+		mov dx, 0
+		mov dx, 10 
+		mov ah, 02h
+		int 21h
+
+        mov     si, offset buffer  ; incarca adresa buffer ului in SI
+        mov     bx, 0       ; initializam contorul pt litere
+        mov     cx, 0      ; initializam contorul pt cuv
+
+next_char:
+        mov     al, [si]    ; mutam caracterul curent in al
+        inc     si          ; trecem la urmatorul carcater
+        cmp     al, 32    ; verificam daca caracterul este spatiu
+        jne     next       ; daca nu e spatiu mergem sa verificam daca e litera
+        inc     cx          ; crestem contorul de cuv cu 1
+
+next: 
+        cmp al,13              ;verifica daca s a terminat sirul
+        je finish                  ; daca da, sare la afisare
+        cmp al, 65               ; se compara codul ascii a lui A cu valoarea pe care o avem in registrul al
+        jl next_char               ; daca e mai putin se trece la caracterul urmator
+        cmp al, 90             ; se compara codul ascii a lui Z cu valoarea pe care o avem in registrul al
+        jle found_letter           ; daca al este >= "A" && <= "Z" -> am gasit o litera
+        cmp al, 97              ; comparam al cu codul ascii a lui a
+        jl next_char               ; se sare la citirea urm caracter <
+        cmp al, 122               ; comparam al cu codul ascii a lui z 
+        jg next_char               ; e mai mare ca decat z
+       
+	   found_letter:
+        inc     bx   ; incrementeaza contorul pt litere
+        jmp     next_char     ; trecem la urm caracter
+finish:
+ mov ax,@data
+	  mov ds,ax
+	  mov dx,offset mesaj1
+	  mov ah,09
+	  int 21h
+inc cx
+mov dx,cx
+add dl,48
+mov ah,02h
+int 21h
+  
+;enter 
+mov dx, 0
+mov dx, 10 
+mov ah, 02h
+int 21h
+ mov ax,@data
+	  mov ds,ax
+	  mov dx,offset mesaj2
+	  mov ah,09
+	  int 21h
+mov ax,0
+mov ax,bx
+mov dx,0
+mov cx,10
+mov bx,0 ;contor cifre
+descompunere:
+div cx
+push dx ;punem in stiva
+mov dx,0
+inc bx
+cmp ax,0
+je amTerminatDescompunerea
+jmp descompunere
+amTerminatDescompunerea:
+mov cx,bx
+afisare:
+pop dx
+add dl,48
+mov ah,02
+int 21h
+loop afisare
+mov ah,4ch
+int 21h
+    main endp
+    end main
